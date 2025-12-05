@@ -1,4 +1,15 @@
+
 {
+  "name": "backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "brain.js",
+  "scripts": {
+    "start": "node brain.js"
+  },
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.86.2",
     "bcryptjs": "^3.0.2",
