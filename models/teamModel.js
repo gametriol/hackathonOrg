@@ -37,7 +37,8 @@ const teamSchema = new mongoose.Schema({
   member1: { type: singleMemberSchema, required: true },
   member2: { type: singleMemberSchema, required: true },
   member3: { type: singleMemberSchema, required: true },
-  member4: { type: singleMemberSchema, required: true },
+  // member4 is optional now to support teams with 4 members (including leader)
+  member4: { type: singleMemberSchema, required: false },
 
   points: { type: Number, default: 0 },
 
@@ -47,6 +48,12 @@ const teamSchema = new mongoose.Schema({
   }
 
 }, { timestamps: true });
+
+// Ensure leader fields are unique across teams
+// This creates unique indexes on the nested leader fields so no two teams can have the same leader email/phone/roll
+teamSchema.index({ 'leader.email': 1 }, { unique: true, sparse: true });
+teamSchema.index({ 'leader.phone': 1 }, { unique: true, sparse: true });
+teamSchema.index({ 'leader.roll': 1 }, { unique: true, sparse: true });
 
 
 

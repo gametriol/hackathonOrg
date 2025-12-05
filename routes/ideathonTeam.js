@@ -20,10 +20,10 @@ router.post('/save', async (req, res) => {
             member4
         } = req.body;
 
-                // Validate required members
-                if (!leader || !member1 || !member2 || !member3 || !member4) {
-                        return res.status(400).json({ message: "All 5 members (leader + 4 members) must be provided." });
-                }
+        // Validate required members: leader + member1..member3 are required; member4 is optional
+        if (!leader || !member1 || !member2 || !member3) {
+            return res.status(400).json({ message: "At least 4 members (including leader) must be provided." });
+        }
 
                 // Validate required imageLink and pptLink
                 if (!imageLink || !pptLink) {
@@ -37,14 +37,20 @@ router.post('/save', async (req, res) => {
                 }
 
                 const memberRequired = ['name','branch','year'];
-                const members = [member1, member2, member3, member4];
+                const members = [member1, member2, member3];
                 for (let i = 0; i < members.length; i++) {
                     for (const f of memberRequired) {
                         if (!members[i] || !members[i][f]) return res.status(400).json({ message: `member${i+1}.${f} is required` });
                     }
                 }
+                // If member4 provided, validate shape as well
+                if (member4) {
+                    for (const f of memberRequired) {
+                        if (!member4[f]) return res.status(400).json({ message: `member4.${f} is required` });
+                    }
+                }
 
-        const newTeam = new TeamModel({
+        const teamObj = {
             teamName,
             projectName,
             pptLink,
@@ -53,10 +59,36 @@ router.post('/save', async (req, res) => {
             member1,
             member2,
             member3,
-            member4,
+            // include member4 only if provided
+            ...(member4 ? { member4 } : {}),
             points: 0,
             judges: []
-        });
+        };
+
+        // Prevent duplicate leader email/phone/roll across teams
+        const existingLeader = await TeamModel.findOne({
+            $or: [
+                { 'leader.email': leader.email },
+                { 'leader.phone': leader.phone },
+                { 'leader.roll': leader.roll }
+            ]
+        }).lean();
+
+        if (existingLeader) {
+            // determine which field conflicts
+            if (existingLeader.leader && existingLeader.leader.email === leader.email) {
+                return res.status(400).json({ message: 'Leader email already registered' });
+            }
+            if (existingLeader.leader && existingLeader.leader.phone === leader.phone) {
+                return res.status(400).json({ message: 'Leader phone already registered' });
+            }
+            if (existingLeader.leader && existingLeader.leader.roll === leader.roll) {
+                return res.status(400).json({ message: 'Leader roll already registered' });
+            }
+            return res.status(400).json({ message: 'Leader details conflict with an existing team' });
+        }
+
+        const newTeam = new TeamModel(teamObj);
 
         await newTeam.save();
 
@@ -79,6 +111,7 @@ router.post('/save', async (req, res) => {
     }
 });
 
+// Check if a team or leader roll already exists to prevent duplicate uploads
 router.post('/check', async (req, res) => {
     try {
         const { teamName, leaderRoll } = req.body;
