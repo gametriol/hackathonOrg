@@ -6,6 +6,11 @@ const router = express.Router();
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
 
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
+
+
 router.post('/save', async (req, res) => {
     try {
         const {
@@ -121,16 +126,29 @@ router.post('/check', async (req, res) => {
         }
 
         if (teamName) {
-            const existing = await TeamModel.findOne({ teamName }).lean();
+            const existing = await TeamModel.findOne({
+                teamName: {
+                    $regex: `^${escapeRegex(teamName)}$`,
+                    $options: 'i'
+                }
+            }).lean();
+
             if (existing) return res.json({ exists: true, field: 'teamName' });
         }
 
         if (leaderRoll) {
-            const existingByRoll = await TeamModel.findOne({ 'leader.roll': leaderRoll }).lean();
+            const existingByRoll = await TeamModel.findOne({
+                'leader.roll': {
+                    $regex: `^${escapeRegex(leaderRoll)}$`,
+                    $options: 'i'
+                }
+            }).lean();
+
             if (existingByRoll) return res.json({ exists: true, field: 'leaderRoll' });
         }
 
         return res.json({ exists: false });
+
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: 'Server error' });
