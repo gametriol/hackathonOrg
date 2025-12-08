@@ -119,41 +119,69 @@ router.post('/save', async (req, res) => {
 // Check if a team or leader roll already exists to prevent duplicate uploads
 router.post('/check', async (req, res) => {
     try {
-        const { teamName, leaderRoll } = req.body;
+        const { teamName, leaderRoll, leaderPhone, leaderEmail } = req.body;
 
-        if (!teamName && !leaderRoll) {
-            return res.status(400).json({ message: 'Provide teamName or leaderRoll to check' });
+        // All fields required for registration duplicate check
+        if (!teamName || !leaderRoll || !leaderPhone || !leaderEmail) {
+            return res.status(400).json({
+                message: 'teamName, leaderRoll, leaderPhone and leaderEmail are required'
+            });
         }
 
-        if (teamName) {
-            const existing = await TeamModel.findOne({
-                teamName: {
-                    $regex: `^${escapeRegex(teamName)}$`,
-                    $options: 'i'
-                }
-            }).lean();
-
-            if (existing) return res.json({ exists: true, field: 'teamName' });
+        // TEAM NAME CHECK
+        const existingTeam = await TeamModel.findOne({
+            teamName: {
+                $regex: `^${escapeRegex(teamName)}$`,
+                $options: 'i'
+            }
+        }).lean();
+        if (existingTeam) {
+            return res.json({ exists: true, field: 'teamName' });
         }
 
-        if (leaderRoll) {
-            const existingByRoll = await TeamModel.findOne({
-                'leader.roll': {
-                    $regex: `^${escapeRegex(leaderRoll)}$`,
-                    $options: 'i'
-                }
-            }).lean();
-
-            if (existingByRoll) return res.json({ exists: true, field: 'leaderRoll' });
+        // LEADER ROLL CHECK
+        const existingRoll = await TeamModel.findOne({
+            'leader.roll': {
+                $regex: `^${escapeRegex(leaderRoll)}$`,
+                $options: 'i'
+            }
+        }).lean();
+        if (existingRoll) {
+            return res.json({ exists: true, field: 'leaderRoll' });
         }
 
+        // LEADER PHONE CHECK
+        const existingPhone = await TeamModel.findOne({
+            'leader.phone': {
+                $regex: `^${escapeRegex(leaderPhone)}$`,
+                $options: 'i'
+            }
+        }).lean();
+        if (existingPhone) {
+            return res.json({ exists: true, field: 'leaderPhone' });
+        }
+
+        // LEADER EMAIL CHECK
+        const existingEmail = await TeamModel.findOne({
+            'leader.email': {
+                $regex: `^${escapeRegex(leaderEmail)}$`,
+                $options: 'i'
+            }
+        }).lean();
+        if (existingEmail) {
+            return res.json({ exists: true, field: 'leaderEmail' });
+        }
+
+        // ALL CLEAR
         return res.json({ exists: false });
 
     } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Server error' });
+        console.log("CHECK ROUTE ERROR:", err);
+        return res.status(500).json({ message: 'Server error' });
     }
 });
+
+
 
 
 export default router;

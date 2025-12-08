@@ -20,6 +20,32 @@ app.use(express.json());
 
 app.use(cors());
 
+// Console request-logging middleware: logs concise summaries to terminal
+app.use((req, res, next) => {
+  const start = Date.now();
+  const now = new Date().toISOString();
+
+  // small preview of body for debugging (avoid huge bodies)
+  let bodyPreview = null;
+  try {
+    if (req.body && Object.keys(req.body).length) {
+      const s = JSON.stringify(req.body);
+      bodyPreview = s.length > 500 ? s.slice(0, 500) + '... (truncated)' : s;
+    }
+  } catch (e) {
+    bodyPreview = '[unserializable]';
+  }
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const summary = `[REQ] ${now} ${req.method} ${req.originalUrl || req.url} ${res.statusCode} ${duration}ms ip=${req.ip || req.connection?.remoteAddress}`;
+    console.log(summary);
+    if (bodyPreview) console.log(`[REQ-BODY] ${bodyPreview}`);
+  });
+
+  next();
+});
+
 app.use("/api/auth", auth);
 app.use("/api/details",detailed);
 app.use("/api/judge",judge);
