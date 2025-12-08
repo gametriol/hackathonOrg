@@ -20,6 +20,7 @@ const singleMemberSchema = new mongoose.Schema({
   name: { type: String, required: true },
   branch: { type: String, required: true },
   year: { type: String, required: true },
+  roll: { type: String, required: true },
 }, { _id: false });
 
 const judgeSchema = new mongoose.Schema({
@@ -54,6 +55,28 @@ const teamSchema = new mongoose.Schema({
 teamSchema.index({ 'leader.email': 1 }, { unique: true, sparse: true });
 teamSchema.index({ 'leader.phone': 1 }, { unique: true, sparse: true });
 teamSchema.index({ 'leader.roll': 1 }, { unique: true, sparse: true });
+
+// Add a rolls array and populate it before validation so we can enforce
+// uniqueness across all leader/member rolls with a single unique index.
+teamSchema.add({ rolls: { type: [String] } });
+
+teamSchema.pre('validate', function (next) {
+  try {
+    const rolls = [];
+    if (this.leader && this.leader.roll) rolls.push(this.leader.roll);
+    if (this.member1 && this.member1.roll) rolls.push(this.member1.roll);
+    if (this.member2 && this.member2.roll) rolls.push(this.member2.roll);
+    if (this.member3 && this.member3.roll) rolls.push(this.member3.roll);
+    if (this.member4 && this.member4.roll) rolls.push(this.member4.roll);
+    this.rolls = Array.from(new Set(rolls));
+  } catch (e) {
+    // ignore
+  }
+  next();
+});
+
+// unique index on rolls ensures no duplicate roll across any team (leader or member)
+teamSchema.index({ rolls: 1 }, { unique: true, sparse: true });
 
 
 
