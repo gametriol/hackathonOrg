@@ -5,6 +5,7 @@ import cors from "cors";
 import auth from "./routes/auth.js";
 import detailed from "./routes/getDetail.js";
 import judge from "./routes/judge.js";
+import hackJudge from "./routes/hackJudge.js";
 import lead from "./routes/leader.js";
 import ideathonTeam from "./routes/ideathonTeam.js";
 import uploadRoutes from './routes/uploadRoutes.js';
@@ -49,6 +50,7 @@ app.use((req, res, next) => {
 app.use("/api/auth", auth);
 app.use("/api/details",detailed);
 app.use("/api/judge",judge);
+app.use("/api/hackJudge",hackJudge);
 app.use("/api/leader",lead);
 app.use("/api/ideathonTeam",ideathonTeam);
 app.use("/api/upload", uploadRoutes);

@@ -28,11 +28,26 @@ const judgeSchema = new mongoose.Schema({
   points: { type: Number, required: true }
 }, { _id: false });
 
+const mentorsSchema = new mongoose.Schema({
+  mentorName: { type: String, required: true },
+}, { _id: false });
+
 const teamSchema = new mongoose.Schema({
   teamName: { type: String, required: true, unique: true },
   projectName: { type: String, required: true },
   pptLink: { type: String, required: true },
   imageLink: { type: String, required: true },
+  // required array of mentor names (at least one mentor)
+  mentors: {
+    type: [String],
+    required: true,
+    validate: {
+      validator: function (arr) {
+        return Array.isArray(arr) && arr.length > 0 && arr.every(a => typeof a === 'string' && a.trim().length > 0);
+      },
+      message: 'At least one mentor name is required and each must be a non-empty string.'
+    }
+  },
 
   leader: { type: leadSchema, required: true },
   member1: { type: singleMemberSchema, required: true },

@@ -17,6 +17,7 @@ router.post("/save", async (req, res) => {
       projectName,
       pptLink,
       imageLink,
+      mentors,
       leader,
       member1,
       member2,
@@ -41,6 +42,11 @@ router.post("/save", async (req, res) => {
           message:
             "imageLink and pptLink are required (team image and ppt URLs).",
         });
+    }
+
+    // Validate mentors: required array with at least one non-empty name
+    if (!Array.isArray(mentors) || mentors.length === 0 || !mentors.every(m => typeof m === 'string' && m.trim().length > 0)) {
+      return res.status(400).json({ message: 'mentors is required: provide at least one non-empty mentor name' });
     }
 
     // Basic shape validation for leader and members
@@ -72,7 +78,8 @@ router.post("/save", async (req, res) => {
       teamName,
       projectName,
       pptLink,
-      imageLink, // ⭐ MUST INCLUDE IT HERE
+      imageLink,
+      mentors,
       leader,
       member1,
       member2,
