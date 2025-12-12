@@ -22,17 +22,18 @@ router.post("/save", async (req, res) => {
       member1,
       member2,
       member3,
-      member4,
     } = req.body;
 
-    // Validate required members: leader + member1..member3 are required; member4 is optional
-    if (!leader || !member1 || !member2 || !member3) {
+    // Require leader + at least two members (member1 & member2). member3 is optional. member4 not allowed.
+    if (!leader || !member1 || !member2) {
       return res
         .status(400)
         .json({
-          message: "At least 4 members (including leader) must be provided.",
+          message: "At least 3 members (including leader) must be provided.",
         });
     }
+
+    // member3 is optional; member4 support removed
 
     // Validate required imageLink and pptLink
     if (!imageLink || !pptLink) {
@@ -57,20 +58,21 @@ router.post("/save", async (req, res) => {
     }
 
     const memberRequired = ["name", "branch", "year", "roll"];
-    const members = [member1, member2, member3];
-    for (let i = 0; i < members.length; i++) {
+    // member1 and member2 are required
+    const requiredMembers = [member1, member2];
+    for (let i = 0; i < requiredMembers.length; i++) {
       for (const f of memberRequired) {
-        if (!members[i] || !members[i][f])
+        if (!requiredMembers[i] || !requiredMembers[i][f])
           return res
             .status(400)
             .json({ message: `member${i + 1}.${f} is required` });
       }
     }
-    // If member4 provided, validate shape as well
-    if (member4) {
+
+    // member3 is optional but if provided must follow the shape
+    if (member3) {
       for (const f of memberRequired) {
-        if (!member4[f])
-          return res.status(400).json({ message: `member4.${f} is required` });
+        if (!member3[f]) return res.status(400).json({ message: `member3.${f} is required` });
       }
     }
 
@@ -83,9 +85,8 @@ router.post("/save", async (req, res) => {
       leader,
       member1,
       member2,
-      member3,
-      // include member4 only if provided
-      ...(member4 ? { member4 } : {}),
+      // include member3 only if provided
+      ...(member3 ? { member3 } : {}),
       points: 0,
       judges: [],
     };
@@ -118,9 +119,9 @@ router.post("/save", async (req, res) => {
         .json({ message: "Leader details conflict with an existing team" });
     }
 
-    // Collect rolls from leader and members and validate duplicates
-    const newRolls = [leader.roll, member1.roll, member2.roll, member3.roll];
-    if (member4 && member4.roll) newRolls.push(member4.roll);
+    // Collect rolls from leader and present members and validate duplicates
+    const newRolls = [leader.roll, member1.roll, member2.roll];
+    if (member3 && member3.roll) newRolls.push(member3.roll);
 
     // Ensure no duplicate rolls within the same team payload
     const uniqueRolls = Array.from(

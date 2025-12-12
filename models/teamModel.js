@@ -52,9 +52,8 @@ const teamSchema = new mongoose.Schema({
   leader: { type: leadSchema, required: true },
   member1: { type: singleMemberSchema, required: true },
   member2: { type: singleMemberSchema, required: true },
-  member3: { type: singleMemberSchema, required: true },
-  // member4 is optional now to support teams with 4 members (including leader)
-  member4: { type: singleMemberSchema, required: false },
+  // member3 is optional to allow teams with 3 or 4 members
+  member3: { type: singleMemberSchema, required: false },
 
   points: { type: Number, default: 0 },
 
@@ -82,7 +81,6 @@ teamSchema.pre('validate', function (next) {
     if (this.member1 && this.member1.roll) rolls.push(this.member1.roll);
     if (this.member2 && this.member2.roll) rolls.push(this.member2.roll);
     if (this.member3 && this.member3.roll) rolls.push(this.member3.roll);
-    if (this.member4 && this.member4.roll) rolls.push(this.member4.roll);
     this.rolls = Array.from(new Set(rolls));
   } catch (e) {
     // ignore
