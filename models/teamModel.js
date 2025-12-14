@@ -35,7 +35,7 @@ const mentorsSchema = new mongoose.Schema({
 const teamSchema = new mongoose.Schema({
   teamName: { type: String, required: true, unique: true },
   projectName: { type: String, required: true },
-  pptLink: { type: String, required: true },
+  pptLink: { type: String, required: false }, // optional for now
   imageLink: { type: String, required: true },
   // required array of mentor names (at least one mentor)
   mentors: {

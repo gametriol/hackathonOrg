@@ -40,14 +40,9 @@ router.post("/save", async (req, res) => {
       return res.status(400).json({ message: 'Team must have between 1 and 4 members (in addition to the leader).' });
     }
 
-    // Validate required imageLink and pptLink
-    if (!imageLink || !pptLink) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "imageLink and pptLink are required (team image and ppt URLs).",
-        });
+    // Validate required imageLink (ppt is optional)
+    if (!imageLink) {
+      return res.status(400).json({ message: "imageLink is required (team image URL)." });
     }
 
     // Validate mentors: required array with at least one non-empty name
@@ -88,7 +83,7 @@ router.post("/save", async (req, res) => {
     const teamObj = {
       teamName,
       projectName,
-      pptLink,
+      ...(pptLink ? { pptLink } : {}),
       imageLink,
       mentors,
       leader,
