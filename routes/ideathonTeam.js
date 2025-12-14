@@ -22,18 +22,23 @@ router.post("/save", async (req, res) => {
       member1,
       member2,
       member3,
+      member4,
     } = req.body;
 
-    // Require leader + at least two members (member1 & member2). member3 is optional. member4 not allowed.
-    if (!leader || !member1 || !member2) {
+    // Require leader + at least one member (member1). member2..member4 are optional. Max team size is 5 including leader.
+    if (!leader || !member1) {
       return res
         .status(400)
         .json({
-          message: "At least 3 members (including leader) must be provided.",
+          message: "At least 2 members (including leader) must be provided.",
         });
     }
 
-    // member3 is optional; member4 support removed
+    // Enforce maximum members: member1..member4 (at most 4 members besides leader)
+    const membersPresent = [member1, member2, member3, member4].filter(Boolean).length;
+    if (membersPresent < 1 || membersPresent > 4) {
+      return res.status(400).json({ message: 'Team must have between 1 and 4 members (in addition to the leader).' });
+    }
 
     // Validate required imageLink and pptLink
     if (!imageLink || !pptLink) {
@@ -58,8 +63,8 @@ router.post("/save", async (req, res) => {
     }
 
     const memberRequired = ["name", "branch", "year", "roll"];
-    // member1 and member2 are required
-    const requiredMembers = [member1, member2];
+    // member1 is required (at least one member besides leader)
+    const requiredMembers = [member1];
     for (let i = 0; i < requiredMembers.length; i++) {
       for (const f of memberRequired) {
         if (!requiredMembers[i] || !requiredMembers[i][f])
@@ -69,10 +74,14 @@ router.post("/save", async (req, res) => {
       }
     }
 
-    // member3 is optional but if provided must follow the shape
-    if (member3) {
-      for (const f of memberRequired) {
-        if (!member3[f]) return res.status(400).json({ message: `member3.${f} is required` });
+    // member2/member3/member4 are optional but if provided must follow the shape
+    const optionalMembers = [member2, member3, member4];
+    for (let i = 0; i < optionalMembers.length; i++) {
+      const m = optionalMembers[i];
+      if (m) {
+        for (const f of memberRequired) {
+          if (!m[f]) return res.status(400).json({ message: `member${i + 2}.${f} is required` });
+        }
       }
     }
 
@@ -84,9 +93,10 @@ router.post("/save", async (req, res) => {
       mentors,
       leader,
       member1,
-      member2,
-      // include member3 only if provided
+      // include optional members only if provided
+      ...(member2 ? { member2 } : {}),
       ...(member3 ? { member3 } : {}),
+      ...(member4 ? { member4 } : {}),
       points: 0,
       judges: [],
     };
@@ -120,8 +130,10 @@ router.post("/save", async (req, res) => {
     }
 
     // Collect rolls from leader and present members and validate duplicates
-    const newRolls = [leader.roll, member1.roll, member2.roll];
+    const newRolls = [leader.roll, member1.roll];
+    if (member2 && member2.roll) newRolls.push(member2.roll);
     if (member3 && member3.roll) newRolls.push(member3.roll);
+    if (member4 && member4.roll) newRolls.push(member4.roll);
 
     // Ensure no duplicate rolls within the same team payload
     const uniqueRolls = Array.from(
