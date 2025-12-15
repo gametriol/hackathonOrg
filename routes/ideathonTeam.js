@@ -273,4 +273,47 @@ router.post("/check", async (req, res) => {
   }
 });
 
+    // Attach or update ppt link for a team identified by any member's roll
+    router.post('/attach-ppt', async (req, res) => {
+      try {
+        const { roll, pptLink } = req.body;
+        if (!roll || !pptLink || typeof pptLink !== 'string' || pptLink.trim().length === 0) {
+          return res.status(400).json({ message: 'roll and pptLink are required' });
+        }
+
+        // find team where any roll matches (case-insensitive)
+        const selector = { rolls: { $elemMatch: { $regex: `^${escapeRegex(String(roll))}$`, $options: 'i' } } };
+        const team = await TeamModel.findOne(selector).lean();
+        if (!team) return res.status(404).json({ message: 'Team not found for provided roll' });
+
+        if (team.pptLink && String(team.pptLink).trim().length > 0) {
+          return res.status(400).json({ message: 'pptLink already exists for this team; not updating' });
+        }
+
+        const updated = await TeamModel.findOneAndUpdate(selector, { $set: { pptLink: pptLink.trim() } }, { new: true }).lean();
+        return res.json({ message: 'pptLink attached', teamId: updated._id, pptLink: updated.pptLink });
+      } catch (err) {
+        console.error('ATTACH_PPT_ERROR:', err);
+        return res.status(500).json({ message: 'Server error' });
+      }
+    });
+
+    // Check whether a specific roll exists in any team
+    router.post('/roll-exists', async (req, res) => {
+      try {
+        const { roll } = req.body;
+        if (!roll) return res.status(400).json({ message: 'roll is required' });
+
+        const existing = await TeamModel.findOne({ rolls: { $elemMatch: { $regex: `^${escapeRegex(String(roll))}$`, $options: 'i' } } }).lean();
+        // Provide descriptive messages:
+        if (!existing) return res.json({ exists: false, message: 'roll not registered' });
+        if (existing.pptLink && String(existing.pptLink).trim().length > 0) return res.json({ exists: false, message: 'ppt already uploaded' });
+        return res.json({ exists: true, message: 'roll available for ppt attach' });
+      } catch (err) {
+        console.error('ROLL_EXISTS_ERROR:', err);
+        return res.status(500).json({ message: 'Server error' });
+      }
+    });
+
 export default router;
+
