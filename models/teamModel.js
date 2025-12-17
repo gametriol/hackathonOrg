@@ -85,6 +85,15 @@
       if (this.member3 && this.member3.roll) rolls.push(this.member3.roll);
       if (this.member4 && this.member4.roll) rolls.push(this.member4.roll);
       this.rolls = Array.from(new Set(rolls));
+      // Aggregate judges' points into the team's total points
+      try {
+        if (Array.isArray(this.judges)) {
+          const total = this.judges.reduce((acc, j) => acc + (Number(j && j.points) || 0), 0);
+          this.points = total;
+        }
+      } catch (e) {
+        // ignore aggregation errors
+      }
     } catch (e) {
       // ignore
     }
