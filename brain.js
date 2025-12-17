@@ -52,7 +52,7 @@ app.use("/api/details",detailed);
 app.use("/api/judge",judge);
 app.use("/api/hackJudge",hackJudge);
 app.use("/api/leader",lead);
-app.use("/api/ideathonTeam",ideathonTeam);
+// app.use("/api/ideathonTeam",ideathonTeam);
 app.use("/api/upload", uploadRoutes);
 
 // simple health check endpoint used by many platforms (GET /healthz)

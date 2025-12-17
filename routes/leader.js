@@ -9,9 +9,9 @@ router.use(express.urlencoded({
     extended: true
 }));
 
-router.get('/leads', authentication, async (req, res) => {
+router.get('/leads', async (req, res) => {
     try {
-        const users = await detailModel.find().sort({ points: -1 });
+        const users = await detailModel.find({},{teamName:1,_id:0}).sort({ points: -1 });
         console.log("Leaderboard fetched Successfully");
         return res.status(200).json({
             message: "Here is your data",
